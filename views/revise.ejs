@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap CSS -->
+    <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+    integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2"
+    crossorigin="anonymous"
+    />
+    <title>게시글 수정</title>
+  </head>
+
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.js"
+  integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+  integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+  crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js"
+  integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s"
+  crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.4.0/socket.io.js"></script>
+
+
+  <script>
+    // 클라이언트에서 URL가져오는것
+    const queryString = window.location.search;
+    // URL의 쿼리 문자열에 대해 작업할 수 있는 메소드
+    const urlParams = new URLSearchParams(queryString);
+    const writeId = urlParams.get("writeId");
+    console.log(writeId)
+
+    // 모든 html 페이지가 화면에 뿌려지고 나서 저 ready안에 서술된 이벤트 get_write()가 동작준비
+    $(document).ready(function () {
+            get_write()
+    })
+    
+    // 게시물 하나 조회 불러와야한다
+
+    // 게시글 쓰기와 같은 양식으로 수정하기때문에 같은 양식을 가져온다. 차이점은 POST -> GET 이라는 점과
+    // reponse를 받는 값이 다르다는 것
+    function get_write() {
+      $.ajax({
+        type: "GET",
+        url: `/api/write/${writeId}`,
+        data: {},
+        success: function (response) {
+          console.log(response['detail'])
+          let writeDetail = response["detail"];
+          
+          $("#title").val(writeDetail["title"]);
+          $("#name").val((writeDetail["name"]));
+          $("#content").val((writeDetail["content"]));
+        }
+      })
+    }
+
+    // 삭제하기
+    function del_write() {
+        let title = $('#title').val()
+        let name = $('#name').val()
+        let content = $('#content').val()
+        let pw = $('#pw').val()
+        console.log(title, name, content, pw)
+
+        $.ajax({
+          type: "delete",
+          url: `/api/write/${writeId}`,
+          data: { pw: pw },            // pw 와 pw: pw 차이점??
+          success: function (response) {
+            console.log(response['result'])
+            if(response['result'] == 'success') {
+              alert('삭제완료')
+              window.location.replace('/main')
+            } else {
+              alert('비밀번호가 다릅니다')
+            }
+          }
+        })
+    }
+
+    // 수정하기
+    function pat_write() {
+        let title = $('#title').val()
+        let name = $('#name').val()
+        let content = $('#content').val()
+        let pw = $('#pw').val()
+        console.log(title, name, content, pw)
+
+        $.ajax({
+          type: "patch",
+          url: `/api/write/${writeId}`,
+          data: { title : title, name : name, content : content , pw : pw }, // 변수 title : api title
+          success: function (response) {
+            console.log(response['result'])
+            if(response['result'] == 'success') {
+              alert('수정완료')
+              window.location.replace('/main')
+            } else {
+              alert('비밀번호가 다릅니다')
+            }
+          }
+        })
+    }
+
+  </script>
+
+  <body>
+    <div id="wrap">
+      <div>제목 <input id="title" type="text" placeholder="제목을 입력하세요"></div><br>
+      <div>작성자 <input id="name" type="text" placeholder="작성자명을 입력하세요"></div><br>
+      <div>내용 <input id="content" type="text" placeholder="내용을 입력하세요"></div><br>
+      <div>비밀번호 <input id="pw" type="password" placeholder="비밀번호에요"></div><br>
+  
+    </div>
+    <button onclick="pat_write()">수정</button>
+    <button onclick="del_write()">삭제</button>
+  
+  </body>
+</html>
