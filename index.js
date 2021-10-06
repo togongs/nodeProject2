@@ -1,23 +1,26 @@
 const express = require('express')
-const User = require("./routers/user");
+var cookieParser = require('cookie-parser');
+const user = require("./routers/user");
 const write = require("./routers/write");
 
 const app = express()
+app.use(cookieParser());
 const router = express.Router();
+
+app.use("/api", express.urlencoded({ extended: false }), router);
+// static 이미지 사용
+app.use(express.static('public'));
 
 // 미들웨어 사용
 app.use(express.urlencoded({extended: false}))
 app.use(express.json())
-
-// static 이미지 사용
-app.use(express.static('public'));
 
 // ejs 작동
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
 // 스키마 연결
-const view1 = require('./schemas/write') // views로 연결
+const view = require('./schemas/write') // views로 연결
 const view2 = require('./schemas/user')
 const connect = require("./schemas/index");
 connect();
@@ -26,11 +29,6 @@ connect();
 const writeRouter = require("./routers/write");
 const usersRouter = require("./routers/user");
 app.use("/api", [writeRouter], [usersRouter]);
-
-
-app.use("/api", express.urlencoded({ extended: false }), router);
-app.use(express.static("assets"));
-
 
 
 // 회원가입 페이지
@@ -51,7 +49,7 @@ app.get('/main',(req, res)=>{
 app.get('/main/data', async (req, res) => {
     // 시간 내림차순 정렬
     // key는 데이터의 이름, value는 1 or -1의 값
-        const posts = await view1.find({}).sort({_id: -1}) // find 전체값 수신
+        const posts = await view.find({}).sort({_id: -1}) // find 전체값 수신
         res.send({data: posts})
     })
 
@@ -65,7 +63,7 @@ app.get('/write', (req, res) => {
 // 게시글 조회 페이지
 app.get('/detail', async (req, res) => {
     let id = req.query.writeId
-    const users = await view1.findOne({_id: id}) // 
+    const users = await view.findOne({_id: id }) // 
     // console.log(users)
     res.render('detail', {users}) // detail.ejs파일을 그리고 detail.ejs파일안에 user값을 객체로 넘겨준다
 })

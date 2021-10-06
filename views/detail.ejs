@@ -60,27 +60,29 @@
     //                         $("#write").append(htmlTemp);
     //       }
 
-// 댓글작성
+
 const queryString = window.location.search
 const urlParams = new URLSearchParams(queryString)
-const _id = urlParams.get("_id")
+const writeId = urlParams.get("writeId")
 
 $(document).ready(function () {
-    
+  comment_get()
 })
-
-function re_write() {
+// 댓글작성
+function comment_write() {
   let comment = $('#comment').val()
-
+  let nickname = $('#nickname').val()
   $.ajax({
       type: "POST",
       url: `/api/comment/${writeId}`,
+      headers: { authorization: `Bearer ${localStorage.getItem("token")}`, },
       data: {
-        comment:comment
+        comment: comment,
+        nickname: nickname
       },
       success: function (response) {
           if(comment !== " ") {
-            alert('댓글 저장')
+            alert('저장했습니다')
             window.location.reload()
           } else {
             alert('빈칸을 채워주세요')
@@ -88,14 +90,58 @@ function re_write() {
       }
   })
 }
+// 댓글조회
+function comment_get() {
+  $.ajax({
+    type: "GET",
+    url: `/api/comment/${writeId}`,
+    data: {},
+    success: function (response) {
+      let comment = response['comments']
+
+      for(let i=0; i<comment.length; i++) {
+        let nickname = comment[i]["nickname"];
+        let content = comment[i]["comment"];
+        // console.log(nickname,content)
+        let temp_html = `<tr>
+                        <th>${nickname}</th>
+                        <th >${content}</th>
+                        <th>
+                          <button onclick="comment_patch()">수정하기</a></button>
+                          <button onclick="comment_delete()">삭제하기</a></button>
+                        </th>
+                    </tr>`
+
+        $('#commentList').append(temp_html)
+      }
+    }
+  })
+}
+
 // 댓글수정
-function re_patch() {
+function comment_patch() {
   
 }
 
 // 댓글삭제
-function re_delete() {
-  
+function comment_delete() {
+  if(confirm('정말 삭제하시겠습니까?')) {
+    return true
+  } else {
+    return false
+  }
+  $.ajax({
+    type: "delete",
+    url: `/api/comment/${writeId}`,
+    data: { comment:comment },           
+    success: function (response) {
+      alert(response['result'])
+      window.location.reload()
+    },
+    error: function (error) {
+      alert(error.responseJSON.errorMessage); 
+    }, 
+  })
 }
 </script>
   
@@ -125,28 +171,30 @@ function re_delete() {
             <button onclick="window.location.href='/revise?writeId=<%=users._id%>'">수정하기</a></button> 
                             <!-- 쿼리스트링으로 넘겨줌 -->
                             <!-- a태그 수정 -->
-            <p>
-              <table class="table2">
+
+
+            <p><hr>
+              
+            <div>
+              <table>
                 <thead>
                     <tr>
-                        <th>로그인한 사람만</th><hr>
-                        <th><input type="text" placeholder="댓글 작성해주세요"></th>
-                        <th>
-                          <button onclick="re_write()">댓글 등록</a></button>
-                        </th>
+                        <th id="nickname">닉네임</th>
+                        <th><input type="text" id="comment" placeholder="내용을 입력해주세요"></th>
+                        <th><button onclick="comment_write()">댓글 등록</a></button></th>
                     </tr>
                 </thead>
-                <tbody id="comment">
+                <tbody id="commentList">
                     <tr>
-                        <th id="name">닉네임명</th>
-                        <th id="comment">댓글 내용</th>
-                        <th>
-                          <button onclick="re_patch()">수정하기</a></button>
-                          <button onclick="re_delete()">삭제하기</a></button>
-                        </th>
+                        <!-- <th>닉네임명</th>
+                        <th>댓글 내용</th>
+                        <th><button onclick="comment_patch()">수정하기</a></button>
+                          <button onclick="comment_delete()">삭제하기</a></button></th> -->
                     </tr>
                 </tbody>
             </table>                
+            </div>
+              
             </p>
             
         </div>

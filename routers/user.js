@@ -2,8 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../schemas/user");
 const authMiddleware = require("../middlewares/auth-middleware");
-
-const router = express.Router();
+const router = express.Router();// 익스프레스 라우터를 router로 쓰겠다
 
 // 회원가입 API
 router.post("/users", async (req, res) => {
@@ -31,34 +30,23 @@ router.post("/users", async (req, res) => {
   res.status(201).send({});
 });
 
-// 로그인 API
+// 로그인 API (쿠키사용법 다시 봐야함)
 router.post("/auth", async (req, res) => {
     const { nickname, password } = req.body;
-  
-    const user = await User.findOne({ nickname, password }).exec(); // 내 아이디는 하나이니까 findOne 해도됨
-  
-    // NOTE: 인증 메세지는 자세히 설명하지 않는것을 원칙으로 한다: https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-responses
-    if (!user) {
-      res.status(400).send({
-        errorMessage: "닉네임 또는 패스워드가 틀렸습니다.",
-      });
-      return;
-    }
-  
-    const token = jwt.sign({ userId: user.userId }, "my-secret-key");
-    res.send({
-      token,
-    });
-});
-
-// 내정보조회 API (로그인 체크)
-router.get("/users/me", authMiddleware, async (req, res) => {
-    const { user } = res.locals;
-    res.send({
-      user: {
-        nickname: user.nickname,
+    const user = await User.findOne({ nickname }).exec(); // 내 아이디는 하나이니까 findOne 해도됨
+    if (user) {
+      if(user.password === password) {
+        const token = jwt.sign({ nickname: user.nickname }, "jcw-secret-key");
+        res.cookie('user', token)
+        res.send({ token })
+      } else {
+        res.status(400).send({
+          errorMessage: "닉네임 또는 패스워드가 틀렸습니다."})
       }
-    })
-});
+    } else {
+      res.status(400).send({
+        errorMessage: "닉네임 또는 패스워드가 틀렸습니다."})
+    };
+})
 
 module.exports = router;

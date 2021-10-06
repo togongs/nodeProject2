@@ -4,11 +4,16 @@ const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 const commentSchema = new Schema({
-  userId: {
+  nickname: {
     type: String,
     required: true,
+    unique: true,
   },
   comment: {
+      type: String,
+      required: true,
+  },
+  postId: {
       type: String,
       required: true,
   },

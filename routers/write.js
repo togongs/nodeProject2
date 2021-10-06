@@ -1,7 +1,8 @@
 const express = require("express");
 const write = require("../schemas/write");
-const comment = require("../schemas/comment");
+const Comment = require("../schemas/comment");
 const authMiddleware = require("../middlewares/auth-middleware");
+const comment = require("../schemas/comment");
 
 const router = express.Router();
 router.use((req, res, next) => {
@@ -46,10 +47,10 @@ router.post('/write', async (req, res) => {
 router.delete("/write/:writeId", async (req, res) => {
     const { writeId } = req.params;
     const { pw } = req.body // body는 수많은 데이터를 가지고 있고 그 중 pw라는 데이터를 가져온다. 
-     console.log(writeId, pw)
+    //  console.log(writeId, pw)
                           // 몽구스를 사용한다
     const isWrite = await write.findOne({ _id: writeId }); // find와 findOne의 차이점 알아보자. 몽고디비 findOne 찾아보기
-    console.log(isWrite)
+    // console.log(isWrite)
     // if (isWrite.length > 0) { // 객체라 길이 필요 없으니 지워줌
       if(pw === isWrite['pw']) {
           await write.deleteOne({ writeId }); // 왜 되는거지???
@@ -66,7 +67,7 @@ router.patch("/write/:writeId", async (req, res) => {
     const { title, name, content, pw } = req.body;
     // console.log(writeId, title, name, content, pw)
     const isWrite = await write.findOne({ '_id': writeId });
-    console.log(isWrite, writeId, pw)
+    // console.log(isWrite, writeId, pw)
     // if (isWrite.length > 0) {
       if(pw === isWrite['pw']) {
         await write.updateOne({ '_id': writeId }, { $set: { title, name, content } });
@@ -75,13 +76,25 @@ router.patch("/write/:writeId", async (req, res) => {
         res.send({result: 'err'})
       }
 })
+// 댓글 가져오기
+router.get('/comment/:writeId', async (req, res) => {
+  const { nickname } =req.params
+  const comments = await Comment.find({ nickname: nickname })
+  // console.log(comments)
+  res.send({ comments: comments })
+})
 
 // 댓글등록 (로그인 필요)
 router.post('/comment/:writeId', authMiddleware, async (req, res) => {
-  const { writeId } = req.params;
+  const { writeId } = req.params
   const { comment } = req.body;
+  // console.log(comment) // comment가 안 온 이유는 ajax에서 문제였다....
 
-  await Comment.create({ _id: writeId, comment: comment });
+  await Comment.create({
+    comment: comment,
+    nickname: res.locals.user,
+    postId: writeId
+  });
   res.send({ result: "success" });
 });
 
@@ -93,7 +106,7 @@ router.patch("/comment/:writeId", authMiddleware, async (req, res) => {
   const comments = await Comment.findOne({ '_id': writeId });
   // console.log(isComment, writeId, pw)
   if (icomment > 0) {
-      await comment.updateOne({ '_id': writeId }, { $set: { comment } });
+      await Comment.updateOne({ '_id': writeId }, { $set: { comment } });
       res.send({ result: "success" });
     } else {
       res.send({result: 'err'})

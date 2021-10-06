@@ -4,8 +4,7 @@ const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 const UserSchema = new Schema({
-  
-  userId: {
+  nickname: {
     type: String,
     required: true,
     unique: true,
@@ -14,6 +13,10 @@ const UserSchema = new Schema({
     type: String,
     required: true,
     unique: true,
+  },
+  comment: {
+    type: String,
+    required: true,
   }
 });
 
