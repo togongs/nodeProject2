@@ -29,10 +29,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.4.0/socket.io.js"></script>
 
   <script>
-      // 2. 다시 볼것
+    // 2. 다시 볼것
       $(document).ready(function () {
-            get_write()
-        })
+        // 토큰이 있는 경우 로그인 기능 hide
+        if(localStorage.getItem('token')) {
+          $('#btn_login').hide()
+          $('#btn_logout').show()
+      } else {
+        // 토큰이 없는 경우 게시글 작성 hide
+        $('#btn_logout').hide()
+        $('#btn_post').hide()
+      }
+
+      get_write()
+    })
+
         // 3. 다시 볼것
       function get_write(category) {
           $("#write").empty()
@@ -60,6 +71,12 @@
                         $("#write").append(htmlTemp);
       }
 
+    function sign_out() { 
+      localStorage.clear(); 
+      alert("로그아웃 했습니다"); 
+      window.location.reload()
+    }
+
   </script>
 
   <body>
@@ -84,6 +101,8 @@
                 </tbody>
             </table>
         </div>
-        <button onclick="window.location.href='/write'">게시글 작성</button>
+        <button id="btn_post" onclick="window.location.href='/write'">게시글 작성</button>
+        <button id="btn_login" onclick="window.location.href='/login'">로그인</button>
+        <button id="btn_logout" onclick="sign_out()">로그아웃</button>
   </body>
 </html>

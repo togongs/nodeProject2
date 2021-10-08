@@ -5,15 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Bootstrap CSS -->
-    <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
-    integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2"
-    crossorigin="anonymous"
-    />
-
+     <!-- Bootstrap CSS -->
+     <link
+     rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+     integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2"
+     crossorigin="anonymous"
+     />
+    
     <title>게시글 조회</title>
+
   </head>
 
   <!-- jQuery first, then Popper.js, then Bootstrap JS -->
@@ -27,6 +28,7 @@
   crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.4.0/socket.io.js"></script>
+
 
 
 <script>
@@ -62,8 +64,9 @@
 
 
 const queryString = window.location.search
-const urlParams = new URLSearchParams(queryString)
-const writeId = urlParams.get("writeId")
+const urlParams = new URLSearchParams(queryString) // URL의 쿼리 문자열에 대해 작업할 수 있는 유틸리티 메서드
+const writeId = urlParams.get("writeId") //ejs관련
+
 
 $(document).ready(function () {
   comment_get()
@@ -94,23 +97,45 @@ function comment_write() {
 function comment_get() {
   $.ajax({
     type: "GET",
-    url: `/api/comment/${writeId}`,
+    url: `/api/comment/${writeId}`, // 게시글 _id필요
     data: {},
     success: function (response) {
       let comment = response['comments']
 
       for(let i=0; i<comment.length; i++) {
+        // console.log(comment[i])
         let nickname = comment[i]["nickname"];
         let content = comment[i]["comment"];
-        // console.log(nickname,content)
+        let commentId = comment[i]["_id"];
+
+        // console.log(commentId)
         let temp_html = `<tr>
                         <th>${nickname}</th>
-                        <th >${content}</th>
+                        <th id="editComment">${content}</th>
                         <th>
-                          <button onclick="comment_patch()">수정하기</a></button>
-                          <button onclick="comment_delete()">삭제하기</a></button>
-                        </th>
-                    </tr>`
+                          <button data-toggle="modal" data-target="#edit${commentId}">수정하기</a></button>
+                          <div class="modal fade" id="edit${commentId}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                          <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">댓글 수정</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>
+                              <div class="modal-body">
+                                <textarea id="edit-comment" rows="2" class="form-control" placeholder="댓글을 수정해주세요">${content}</textarea>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                                <button type="button" class="btn btn-primary" onclick="comment_patch('${commentId}')">수정</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                          
+                          <button onclick="comment_delete('${commentId}')">삭제하기</a></button>
+                        </th>`
 
         $('#commentList').append(temp_html)
       }
@@ -119,30 +144,60 @@ function comment_get() {
 }
 
 // 댓글수정
-function comment_patch() {
-  
+function comment_patch(commentId) {
+  let comment = $('#edit-comment').val()
+  console.log(comment)
+
+  $.ajax({
+    type: "PATCH",
+    url: `/api/comment/${commentId}`,
+    headers: { authorization: `Bearer ${localStorage.getItem("token")}`, },
+    data: {
+      comment: comment
+    },
+    success: function (response) {
+      if(response["result"] === "success") {
+        alert('수정완료')
+        window.location.reload()
+      }
+    },
+    error: function (error) {
+        alert('본인의 글만 삭제가능합니다'); 
+    },
+  })
 }
 
 // 댓글삭제
-function comment_delete() {
-  if(confirm('정말 삭제하시겠습니까?')) {
-    return true
+function comment_delete(commentId) {
+
+  if(!confirm('정말 삭제하시겠습니까?')) {
+    return flase
   } else {
-    return false
-  }
-  $.ajax({
-    type: "delete",
-    url: `/api/comment/${writeId}`,
-    data: { comment:comment },           
-    success: function (response) {
-      alert(response['result'])
-      window.location.reload()
-    },
-    error: function (error) {
-      alert(error.responseJSON.errorMessage); 
-    }, 
-  })
+    $.ajax({
+      type: "DELETE",
+      url: `/api/comment/${commentId}`, // 인자가 commentId이니까 1번 commentId로 쓰겠다 선언. 
+      headers: { authorization: `Bearer ${localStorage.getItem("token")}` },
+      data: { 
+      },
+      success: function (response) {
+        if(response["result"] === "success") {
+          alert('삭제했습니다')
+          window.location.reload()
+        }
+      },
+      error: function (error) {
+        alert('본인의 글만 삭제가능합니다');
+      }, 
+    })
+  } 
 }
+
+function login_check() {
+  if(!localStorage.getItem('token')) {
+    alert('로그인이 필요한 기능입니다')
+  }
+}
+
 </script>
   
   <body>
@@ -179,9 +234,13 @@ function comment_delete() {
               <table>
                 <thead>
                     <tr>
-                        <th id="nickname">닉네임</th>
-                        <th><input type="text" id="comment" placeholder="내용을 입력해주세요"></th>
-                        <th><button onclick="comment_write()">댓글 등록</a></button></th>
+                        <th>
+                          <input type="text" id="comment" 
+                          placeholder="코멘트를 달아주세요" onclick="login_check()">
+                        </th>
+                        <th>
+                          <button onclick="comment_write()">작성</a></button>
+                        </th>
                     </tr>
                 </thead>
                 <tbody id="commentList">
@@ -198,5 +257,31 @@ function comment_delete() {
             </p>
             
         </div>
+
+          <!-- Button trigger modal -->
+  <!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+    Launch demo modal
+  </button> -->
+
+  <!-- Modal -->
+  <!-- <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          ...
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div> -->
   </body>
 </html>

@@ -37,12 +37,12 @@ app.get('/user',(req, res)=>{
 });
 
 // 로그인 페이지
-app.get('/',(req, res)=>{
+app.get('/login',(req, res)=>{
     res.render('login')
 });
 
 // 메인 페이지 (게시글 조회)
-app.get('/main',(req, res)=>{
+app.get('/',(req, res)=>{
     res.render('main')
 });
 

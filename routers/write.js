@@ -2,7 +2,6 @@ const express = require("express");
 const write = require("../schemas/write");
 const Comment = require("../schemas/comment");
 const authMiddleware = require("../middlewares/auth-middleware");
-const comment = require("../schemas/comment");
 
 const router = express.Router();
 router.use((req, res, next) => {
@@ -77,55 +76,55 @@ router.patch("/write/:writeId", async (req, res) => {
       }
 })
 // 댓글 가져오기
-router.get('/comment/:writeId', async (req, res) => {
-  const { nickname } =req.params
-  const comments = await Comment.find({ nickname: nickname })
+router.get('/comment/:boardId', async (req, res) => {
+  const { boardId } =req.params
+  const comments = await Comment.find({ postId: boardId }) // 디비컬럼명: 변수명
   // console.log(comments)
   res.send({ comments: comments })
 })
 
 // 댓글등록 (로그인 필요)
-router.post('/comment/:writeId', authMiddleware, async (req, res) => {
-  const { writeId } = req.params
+router.post('/comment/:boardId', authMiddleware, async (req, res) => {
+  const { boardId } = req.params; // 고유한 게시글id가 있어야 게시글 마다 구분하여 댓글을 넣을 수 있다.
   const { comment } = req.body;
   // console.log(comment) // comment가 안 온 이유는 ajax에서 문제였다....
 
   await Comment.create({
     comment: comment,
     nickname: res.locals.user,
-    postId: writeId
+    postId: boardId
   });
   res.send({ result: "success" });
 });
 
 // 댓글 수정 (로그인 필요)
-router.patch("/comment/:writeId", authMiddleware, async (req, res) => {
-  const { writeId } = req.params;
+router.patch("/comment/:commentId", authMiddleware, async (req, res) => {
+  const { commentId } = req.params;
   const { comment } = req.body;
-  // console.log(writeId, title, name, content, pw)
-  const comments = await Comment.findOne({ '_id': writeId });
-  // console.log(isComment, writeId, pw)
-  if (icomment > 0) {
-      await Comment.updateOne({ '_id': writeId }, { $set: { comment } });
-      res.send({ result: "success" });
-    } else {
-      res.send({result: 'err'})
-    }
-})
-// 댓글 삭제 ()
-router.delete("/comment/:writeId", authMiddleware, async (req, res) => {
-  const { writeId } = req.params;
-  const userId = res.locals.user; // 흠... 왜일까...
-   // console.log(writeId, pw)
 
-  const comments = await Comment.findOne({ _id: writeId }); // find와 findOne의 차이점 알아보자. 몽고디비 findOne 찾아보기
-  // console.log(isWrite)
-  // if (isWrite.length > 0) { // 객체라 길이 필요 없으니 지워줌
-    if(userId === comments.userId) {
-        await Comment.deleteOne({ _id: writeId });
+  const isComment = await Comment.findOne({ objId: commentId }) //ㅇ
+
+  console.log(commentId, isComment.objId)
+
+  if (commentId === isComment.objId) {
+  await Comment.updateOne({ objId: commentId }, { $set: { comment } });
+    res.send({ result: "success" });
+  } else {
+    res.status(400).send({ result: "err" })
+  }
+})
+
+// 댓글 삭제 ()          // 2번 (변수)로 맞춰줌
+router.delete("/comment/:commentId", authMiddleware, async (req, res) => {
+  const { commentId } = req.params;
+  
+  // 내가 쓴 글 아니면 못지우게 하는 작업
+  const comment = await Comment.findOne({ objId: commentId }); // find는 배열로. findOne은 첫번째 하나만 객체로 가져옴
+  if(commentId === comment.objId) {
+        await Comment.deleteOne({ objId: commentId });
         res.send({ result: "success" });
     } else {
-        res.send({result: "err"})
+      res.status(400).send({result: "err"})
     }
 });
 
