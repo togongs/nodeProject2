@@ -10,14 +10,14 @@ const commentSchema = new Schema({
     unique: true,
   },
   comment: {
-      type: String,
-      required: true,
+    type: String,
+    required: true,
   },
   postId: {
-      type: String,
-      required: true,
+    type: String,
+    required: true,
   },
-})
+});
 commentSchema.virtual("objId").get(function () {
   return this._id.toHexString();
 });
